@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="icon" href="/static/index/favicon.ico"/>
+</head>
+
+<body>
+    <div class="sidebar bg-dark" id="mySidebar">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+        {% for collection in collections %}
+        <a href="#" onclick="fetchCollectionData('{{ collection }}')">{{ collection }}</a>
+        {% endfor %}
+    </div>
+    <div id="main">
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <a class="navbar-brand" href="#">Admin Dashboard</a>
+            <div class="header-buttons">
+                <button class="btn btn-dark" onclick="openNav()">☰</button>
+                <button class="btn btn-dark" onclick="refreshData()">Refresh</button>
+                <a class="btn btn-dark" href="/logout">Logout</a>
+            </div>
+        </nav>
+        <div id="data-container" class="container mt-5"></div>
+    </div>
+
+    <script>
+        function openNav() {
+            document.getElementById("mySidebar").style.width = "250px";
+            document.getElementById("main").style.marginLeft = "250px";
+        }
+
+        function closeNav() {
+            document.getElementById("mySidebar").style.width = "0";
+            document.getElementById("main").style.marginLeft = "0";
+        }
+
+        function refreshData() {
+            const activeButton = document.querySelector('.sidebar a.active');
+            if (activeButton) {
+                fetchCollectionData(activeButton.textContent);
+            }
+        }
+
+        function fetchCollectionData(collectionName) {
+            fetch(`/admin_dashboard/${collectionName}`)
+                .then(response => response.json())
+                .then(data => {
+                    displayCollectionData(collectionName, data);
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
+
+        function displayCollectionData(collectionName, data) {
+            const dataContainer = document.getElementById('data-container');
+            dataContainer.innerHTML = '';
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            const cardHeader = document.createElement('div');
+            cardHeader.className = 'card-header';
+            cardHeader.textContent = collectionName.charAt(0).toUpperCase() + collectionName.slice(1);
+            card.appendChild(cardHeader);
+
+            const tableContainer = document.createElement('div');
+            tableContainer.className = 'table-container';
+
+            const table = document.createElement('table');
+            table.className = 'table table-striped table-bordered data-table';
+
+            const thead = document.createElement('thead');
+            const tbody = document.createElement('tbody');
+
+            if (data.length > 0) {
+                const headers = Object.keys(data[0]);
+                const headerRow = document.createElement('tr');
+                headers.forEach(header => {
+                    const th = document.createElement('th');
+                    th.textContent = header.toUpperCase();
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    headers.forEach(header => {
+                        const cell = document.createElement('td');
+                        if (header === 'transactions') {
+                            const transactionsCell = document.createElement('td');
+                            const transactionsButton = document.createElement('button');
+                            transactionsButton.textContent = 'View Transactions';
+                            transactionsButton.className = 'btn btn-sm btn-dark view-transactions';
+                            transactionsButton.onclick = function () {
+                                toggleTransactions(this, item[header]);
+                            };
+                            transactionsCell.appendChild(transactionsButton);
+                            row.appendChild(transactionsCell);
+                        } else if (header === '_id') {
+                            cell.textContent = item[header]['$oid'];
+                        } else {
+                            cell.textContent = item[header];
+                        }
+                        row.appendChild(cell);
+                    });
+                    tbody.appendChild(row);
+                });
+            } else {
+                const noDataRow = document.createElement('tr');
+                const noDataCell = document.createElement('td');
+                noDataCell.colSpan = 100;
+                noDataCell.textContent = 'No data available';
+                noDataRow.appendChild(noDataCell);
+                tbody.appendChild(noDataRow);
+            }
+
+            table.appendChild(thead);
+            table.appendChild(tbody);
+            tableContainer.appendChild(table);
+            card.appendChild(tableContainer);
+            dataContainer.appendChild(card);
+        }
+
+        function toggleTransactions(button, transactions) {
+            const row = button.closest('tr');
+            let detailsRow = row.nextElementSibling;
+            if (!detailsRow || !detailsRow.classList.contains('transaction-details')) {
+                detailsRow = document.createElement('tr');
+                detailsRow.className = 'transaction-details';
+                const detailsCell = document.createElement('td');
+                detailsCell.colSpan = 100;
+                const transactionTable = document.createElement('table');
+                transactionTable.className = 'table table-sm table-bordered';
+                const transactionHead = document.createElement('thead');
+                const transactionBody = document.createElement('tbody');
+                const transactionHeaders = Object.keys(transactions[0]);
+                const transactionHeaderRow = document.createElement('tr');
+                transactionHeaders.forEach(header => {
+                    const th = document.createElement('th');
+                    th.textContent = header.toUpperCase();
+                    transactionHeaderRow.appendChild(th);
+                });
+                transactionHead.appendChild(transactionHeaderRow);
+                transactions.forEach(transaction => {
+                    const transactionRow = document.createElement('tr');
+                    transactionHeaders.forEach(header => {
+                        const td = document.createElement('td');
+                        if (header === 'timestamp') {
+                            const timestamp = new Date(transaction[header].$date);
+                            td.textContent = timestamp.toLocaleString(); // Format timestamp as a human-readable date string
+                        } else {
+                            td.textContent = transaction[header];
+                        }
+                        transactionRow.appendChild(td);
+                    });
+                    transactionBody.appendChild(transactionRow);
+                });
+                transactionTable.appendChild(transactionHead);
+                transactionTable.appendChild(transactionBody);
+                detailsCell.appendChild(transactionTable);
+                detailsRow.appendChild(detailsCell);
+                row.parentNode.insertBefore(detailsRow, row.nextSibling);
+            } else {
+                detailsRow.classList.toggle('active');
+            }
+        }
+    </script>
+</body>
+
+</html>

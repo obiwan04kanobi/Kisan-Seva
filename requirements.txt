@@ -1,0 +1,13 @@
+# install the below libraries using
+# pip install -r requirements.txt
+
+pandas
+numpy
+matplotlib
+seaborn
+scikit-learn
+flask
+gunicorn
+Flask-Bcrypt
+pymongo
+razorpay
