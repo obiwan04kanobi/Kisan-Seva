@@ -28,6 +28,9 @@ Welcome to Kisan Seva, a platform dedicated to supporting Indian farmers with va
 - Python (Flask backend & ML Model)
 - HTML & CSS
 
+# Website Architecture Diagram
+![kisan-seva website architecture](/static/index/architecture_diagram.jpeg)
+
 # Contributors
 This project was made possible by the collaborative efforts of the following contributors:
 
