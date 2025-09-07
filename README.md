@@ -1,4 +1,4 @@
-# Kisan Seva
+#  Kisan Seva
 
 Welcome to Kisan Seva, a platform dedicated to supporting Indian farmers with valuable resources and tools to improve agricultural practices and access essential services. This project was developed during the Hack-X 2.0 Hackathon conducted at NIET, Greater Noida on April 13, 2024.
 
